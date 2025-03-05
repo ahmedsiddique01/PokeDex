@@ -10,7 +10,16 @@ import CoreData
 struct PersistenceController {
     static let shared = PersistenceController()
 
-    @MainActor
+    static var previewPokemon:Pokemon{
+        let context = PersistenceController.preview.container.viewContext
+        let fetchRequest: NSFetchRequest<Pokemon> = Pokemon.fetchRequest()
+        fetchRequest.fetchLimit = 1
+        
+        let results = try! context.fetch(fetchRequest)
+        
+        return results.first!
+    }
+    
     static let preview: PersistenceController = {
         
         let result = PersistenceController(inMemory: true)
@@ -26,8 +35,8 @@ struct PersistenceController {
         newPokemon.specialAttack = 65
         newPokemon.specialDefense = 65
         newPokemon.speed = 45
-        newPokemon.sprite = URL(string: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1.png")
-        newPokemon.shiny = URL(string: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/1.png")
+        newPokemon.spriteURL = URL(string: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1.png")
+        newPokemon.shinyURL = URL(string: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/1.png")
     
         do {
             try viewContext.save()

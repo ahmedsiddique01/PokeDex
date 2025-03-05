@@ -59,15 +59,22 @@ struct ContentView: View {
                     Section{
                         ForEach(pokedex){pokemon in
                             NavigationLink(value: pokemon){
-                                AsyncImage(url: pokemon.sprite){image in
-                                    image
+                                if pokemon.sprite == nil{
+                                    AsyncImage(url: pokemon.spriteURL){image in
+                                        image
+                                            .resizable()
+                                            .scaledToFit()
+                                    } placeholder: {
+                                        ProgressView()
+                                    }
+                                    .frame(width: 100, height: 100)
+                                } else{
+                                    pokemon.spriteImage
                                         .resizable()
                                         .scaledToFit()
-                                } placeholder: {
-                                    ProgressView()
+                                        .frame(width: 100, height: 100)
                                 }
-                                .frame(width: 100, height: 100)
-                               
+                                
                                 VStack(alignment: .leading){
                                     HStack{
                                         Text(pokemon.name!.capitalized)
@@ -126,7 +133,7 @@ struct ContentView: View {
                     }
                     .autocorrectionDisabled()
                     .navigationDestination(for: Pokemon.self){pokemon in
-                        Text(pokemon.name ?? "No name")
+                        PokemonDetail().environmentObject(pokemon)
                     }
                     .toolbar {
                         ToolbarItem(placement: .navigationBarTrailing) {
@@ -157,19 +164,38 @@ struct ContentView: View {
                     pokemon.defense = fetchedPokemon.defense
                     pokemon.types = fetchedPokemon.types
                     pokemon.hp = fetchedPokemon.hp
-                    pokemon.sprite = fetchedPokemon.sprite
-                    pokemon.shiny = fetchedPokemon.shiny
+                    pokemon.spriteURL = fetchedPokemon.spriteURL
+                    pokemon.shinyURL = fetchedPokemon.shinyURL
                     pokemon.specialAttack = fetchedPokemon.specialAttack
                     pokemon.specialDefense = fetchedPokemon.specialDefense
+                    
+                    
                     try viewContext.save()
                 } catch{
                     print(error)
                 }
-                
             }
+            storeImages()
         }
     }
     
+    private func storeImages(){
+        Task{
+            do{
+                for pokemon in all {
+                    pokemon.sprite = try await URLSession.shared.data(from: pokemon.spriteURL!).0
+                    pokemon.shiny = try await URLSession.shared.data(from: pokemon.shinyURL!).0
+                    
+                    try viewContext.save()
+                    
+                    print("Sprite stored: \(pokemon.id):\(pokemon.name!.capitalized)")
+                }
+                
+            }catch{
+                print(error)
+            }
+        }
+    }
 }
 
 
